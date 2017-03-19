@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Gamedev Canvas Workshop - lesson 10: finishing up</title>
+    <style>* { padding: 0; margin: 0; } canvas { background: #eee; display: block; margin: 0 auto; }</style>
+</head>
+<body>
+
+<canvas id="myCanvas" width="480" height="320"></canvas>
+
+<script>
+
+  var canvas = document.getElementById("myCanvas");
+  var ctx = canvas.getContext("2d");
+
+  var frameCount = 0;
+
+  var values = [];
+  var blocks = [];
+
+  var fallSpeed = 1;
+  var blockWidth = 40;
+  var blockHeight = 30;
+  var textXBuffer = 10;
+  var textYBuffer = 20;
+  var frameDelay = 120;
+
+  var operand_1 = getRandomInt(0, 50);
+  var operand_2 = getRandomInt(0, 50);
+  var answer = operand_1 + operand_2;
+
+  for (var i = 0; i < 9; i++) {
+    var value = getRandomInt(0, answer);
+    if (value != operand_2) {
+      values.push(value);
+    }
+  }
+  values.splice(getRandomInt(0, 9), 0, operand_2);
+
+
+  document.addEventListener("mousedown", mousedownHandler, false);
+
+  var sndCorrect = new Audio("correct.wav"); // buffers automatically when created
+  var sndIncorrect = new Audio("incorrect.wav"); // buffers automatically when created
+
+  function mousedownHandler(event) {
+    var x = event.x - canvas.offsetLeft;
+    var y = event.y - canvas.offsetTop;
+
+    for (var i = 0; i < blocks.length; i++) {
+      if (blocks[i].containsPoint(x, y)) {
+        if (blocks[i].value == operand_2) {
+          sndCorrect.play();
+        } else {
+          sndIncorrect.play();
+        }
+        blocks.splice(i, 1);
+        i--;
+      }
+    }
+
+  }
+
+  function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function Block(value) {
+    this.x = getRandomInt(0, canvas.width - blockWidth);
+    this.y = 0;
+    this.value = value;
+  }
+
+  Block.prototype.paint = function() {
+    ctx.beginPath();
+    ctx.rect(this.x, this.y, blockWidth, blockHeight);
+    ctx.fillStyle = "#0095DD";
+    ctx.fill();
+    ctx.closePath();
+
+    ctx.font = "18px Arial";
+    ctx.fillStyle = "#000000";
+    ctx.fillText(this.value, this.x + textXBuffer, this.y + textYBuffer);
+
+    this.y += fallSpeed;
+  };
+
+  Block.prototype.containsPoint = function(x, y) {
+    return this.x <= x && x <= this.x + blockWidth && this.y <= y && y <= this.y + blockHeight;
+  };
+
+  function drawBlocks() {
+    for (var i = 0; i < blocks.length; i++) {
+      blocks[i].paint();
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.font = "25px Arial";
+    ctx.fillStyle = "#000000";
+    ctx.fillText(operand_1 + " + __ = " + answer, 20, 30);
+
+    drawBlocks();
+    if (frameCount % frameDelay === 0 && values.length > 0) {
+      blocks.push(new Block(values[0]));
+      values.splice(0, 1);
+    }
+    frameCount++;
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+</script>
+
+</body>
+</html>
